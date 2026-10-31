@@ -1,0 +1,148 @@
+:root {
+    --bg-dark: #0f111a;
+    --bg-panel: #161821;
+    --border: #2a2d3d;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #3b82f6;
+    --green: #10b981;
+    --red: #ef4444;
+    --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-family);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.app-container { display: flex; flex-direction: column; height: 100%; }
+
+/* Ticker */
+.ticker-wrap {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    height: 35px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+.ticker-content {
+    display: flex;
+    white-space: nowrap;
+    animation: scroll 40s linear infinite;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+@keyframes scroll {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+.ticker-item { margin-right: 20px; }
+.ticker-up { color: var(--green); }
+.ticker-down { color: var(--red); }
+
+/* Layout */
+.main-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr 300px;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Panels */
+.sidebar, .trading-panel {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+.trading-panel { border-right: none; border-left: 1px solid var(--border); }
+
+.panel-header {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+}
+
+/* Watchlist */
+.watchlist-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--border);
+}
+.watchlist-item:hover, .watchlist-item.active { background: rgba(255,255,255,0.05); }
+.wl-symbol { font-weight: 600; }
+.wl-price { text-align: right; }
+.wl-change { font-size: 0.75rem; }
+
+/* Chart Area */
+.chart-area {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    background: var(--bg-dark);
+}
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+#mainChart { flex: 1; width: 100%; }
+.large-price { font-size: 1.5rem; font-weight: 700; margin-right: 10px; }
+
+/* Trading Panel */
+.portfolio-summary { padding: 15px; border-bottom: 1px solid var(--border); }
+.summary-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+.highlight { font-weight: 600; }
+
+.order-entry { padding: 15px; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+.tab {
+    flex: 1; padding: 8px; background: transparent; border: 1px solid var(--border);
+    color: var(--text-main); cursor: pointer; border-radius: 4px;
+}
+.tab.active.buy { background: var(--green); border-color: var(--green); color: white; }
+.tab.active.sell { background: var(--red); border-color: var(--red); color: white; }
+
+.input-group { margin-bottom: 10px; }
+.input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px; }
+.input-group input {
+    width: 100%; padding: 8px; background: var(--bg-dark); border: 1px solid var(--border);
+    color: var(--text-main); border-radius: 4px;
+}
+
+.trade-stats { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 15px; color: var(--text-muted); }
+.btn-trade {
+    width: 100%; padding: 12px; font-size: 1rem; font-weight: 600; border: none;
+    border-radius: 4px; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-trade.buy { background: var(--green); color: white; }
+.btn-trade.sell { background: var(--red); color: white; }
+
+.positions { flex: 1; }
+.position-item {
+    padding: 10px 15px; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    display: grid; grid-template-columns: 1fr auto; gap: 5px;
+}
+.pos-pnl { font-weight: 600; }
+
+/* Toast */
+#toast {
+    position: fixed; bottom: 20px; right: 20px; background: var(--bg-panel);
+    border: 1px solid var(--border); padding: 15px; border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none; z-index: 1000;
+}
