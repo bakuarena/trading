@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepHat Terminal Pro</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root {
+            --bg-base: #0d1117;
+            --bg-panel: #161b22;
+            --bg-hover: #21262d;
+            --border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --green: #2ea043;
+            --red: #f85149;
+            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        /* --- Layout Grid --- */
+        .app {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 40px 1fr;
+            height: 100vh;
+            gap: 1px;
+            background-color: var(--border); /* Creates grid lines */
+        }
+
+        /* --- Header / Ticker --- */
+        .header {
+            grid-column: 1 / -1;
+            background-color: var(--bg-panel);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .logo {
+            padding: 0 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--accent);
+            border-right: 1px solid var(--border);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+            background: var(--bg-panel);
+        }
+        .ticker-scroll {
+            white-space: nowrap;
+            animation: scroll 30s linear infinite;
+            display: flex;
+        }
+        .ticker-item {
+            padding: 0 15px;
+            display: flex;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+        .ticker-up { color: var(--green); }
+        .ticker-down { color: var(--red); }
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* --- Sidebar (Watchlist) --- */
+        .sidebar {
+            background-color: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .section-header {
+            padding: 10px 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        .asset-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid transparent;
+        }
+        .asset-row:hover { background-color: var(--bg-hover); }
+        .asset-row.active {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-left: 3px solid var(--accent);
+        }
+        .asset-info h3 { font-size: 0.9rem; font-weight: 600; }
+        .asset-info span { font-size: 0.75rem; color: var(--text-secondary); }
+        .asset-price { text-align: right; font-family: var(--font-mono); }
+        .asset-price .val { font-size: 0.9rem; font-weight: 600; }
+        .asset-price .chg { font-size: 0.75rem; }
+
+        /* --- Main Chart Area --- */
+        .main-area {
+            background-color: var(--bg-base);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .chart-toolbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+        }
+        .chart-title { font-weight: 600; font-size: 1.1rem; }
+        .chart-stats { display: flex; gap: 15px; font-family: var(--font-mono); font-size: 0.85rem; }
+        .stat-item { display: flex; gap: 5px; }
+        .stat-label { color: var(--text-secondary); }
+        
+        #chart-container {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* --- Trading Panel --- */
+        .trade-panel {
+            background-color: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-section {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* Order Tabs */
+        .order-tabs {
+            display: flex;
+            background: var(--bg-base);
+            border-radius: 6px;
+            padding: 4px;
+            margin-bottom: 15px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .tab.buy.active { background: var(--green); color: white; }
+        .tab.sell.active { background: var(--red); color: white; }
+
+        /* Inputs */
+        .input-group { margin-bottom: 12px; }
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .input-wrapper input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 10px;
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            width: 100%;
+        }
+        .input-wrapper input:focus { outline: none; }
+        .input-suffix {
+            padding: 0 10px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        /* Order Book Simulation */
+        .order-book {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+        .ob-col { display: flex; flex-direction: column; gap: 2px; }
+        .ob-header {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 5px;
+            font-size: 0.7rem;
+        }
+        .ob-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            position: relative;
+        }
+        .ob-bar {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+        .ob-bids .ob-bar { right: 0; background: rgba(46, 160, 67, 0.2); }
+        .ob-asks .ob-bar { left: 0; background: rgba(248, 81, 73, 0.2); }
+        .ob-text { position: relative; z-index: 2; }
+        .ob-bids .price { color: var(--green); }
+        .ob-asks .price { color: var(--red); }
+
+        /* Buttons */
+        .btn-execute {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            transition: opacity 0.2s;
+            margin-top: 10px;
+        }
+        .btn-execute:hover { opacity: 0.9; }
+        .btn-buy { background: var(--green); }
+        .btn-sell { background: var(--red); }
+
+        /* Portfolio */
+        .portfolio-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .p-card {
+            background: var(--bg-base);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .p-label { font-size: 0.7rem; color: var(--text-secondary); }
+        .p-val { font-size: 1rem; font-weight: 600; font-family: var(--font-mono); }
+
+        /* Toast */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .toast {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 12px 15px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+            font-size: 0.9rem;
+        }
+        .toast.success { border-left: 4px solid var(--green); }
+        .toast.error { border-left: 4px solid var(--red); }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">DEEPHAT TERMINAL</div>
+        <div class="ticker-scroll" id="tickerScroll">
+            <!-- Injected via JS -->
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="section-header">Watchlist</div>
+        <div id="watchlistContainer">
+            <!-- Injected via JS -->
+        </div>
+    </aside>
+
+    <!-- Main Chart -->
+    <main class="main-area">
+        <div class="chart-toolbar">
+            <div class="chart-title" id="activeSymbol">BTC/USD</div>
+            <div class="chart-stats">
+                <div class="stat-item"><span class="stat-label">Last</span> <span id="statLast" class="ticker-up">$0.00</span></div>
+                <div class="stat-item"><span class="stat-label">Chg</span> <span id="statChg" class="ticker-up">0.00%</span></div>
+                <div class="stat-item"><span class="stat-label">Vol</span> <span id="statVol">0</span></div>
+            </div>
+        </div>
+        <div id="chart-container"></div>
+    </main>
+
+    <!-- Trading Panel -->
+    <aside class="trade-panel">
+        <!-- Portfolio -->
+        <div class="panel-section">
+            <div class="section-header" style="padding:0 0 10px 0; border:none;">Portfolio</div>
+            <div class="portfolio-summary">
+                <div class="p-card">
+                    <div class="p-label">Cash</div>
+                    <div class="p-val" id="valCash">$0.00</div>
+                </div>
+                <div class="p-card">
+                    <div class="p-label">Equity</div>
+                    <div class="p-val" id="valEquity">$0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Entry -->
+        <div class="panel-section" style="flex: 1;">
+            <div class="order-tabs">
+                <div class="tab buy active" id="tabBuy">BUY</div>
+                <div class="tab sell" id="tabSell">SELL</div>
+            </div>
+
+            <div class="input-group">
+                <label>Quantity</label>
+                <div class="input-wrapper">
+                    <input type="number" id="inputQty" value="0.1" step="0.1" min="0">
+                    <span class="input-suffix" id="qtySuffix">BTC</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Price (Limit/Mkt)</label>
+                <div class="input-wrapper">
+                    <input type="number" id="inputPrice" value="0" step="0.01">
+                    <span class="input-suffix">USD</span>
+                </div>
+            </div>
+
+            <!-- Order Book -->
+            <div class="section-header" style="padding:0; border:none; margin-top:15px;">Order Book</div>
+            <div class="order-book">
+                <div class="ob-col ob-bids">
+                    <div class="ob-header"><span>BID</span><span>SIZE</span></div>
+                    <div id="obBids"></div>
+                </div>
+                <div class="ob-col ob-asks">
+                    <div class="ob-header"><span>ASK</span><span>SIZE</span></div>
+                    <div id="obAsks"></div>
+                </div>
+            </div>
+
+            <button class="btn-execute btn-buy" id="btnExecute">Buy 0.1 BTC</button>
+        </div>
+
+        <!-- Positions -->
+        <div class="panel-section" style="border-bottom:none; flex:1; overflow-y:auto;">
+            <div class="section-header" style="padding:0 0 10px 0; border:none;">Open Positions</div>
+            <div id="positionsList">
+                <div style="color: var(--text-secondary); font-size: 0.8rem; text-align:center; padding: 10px;">No open positions</div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+/**
+ * DeepHat Terminal - Logic Engine
+ */
+
+//
